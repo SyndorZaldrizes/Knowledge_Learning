@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Progress</title>
+  <link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+  <main class="container">
+    <header class="card">
+      <h1>Progress</h1>
+      <div class="row wrap">
+        <a class="btn btn-secondary" href="index.html">Home</a>
+      </div>
+    </header>
+
+    <section class="card">
+      <div class="row space wrap">
+        <div>
+          <h2 id="player">Player: —</h2>
+          <p class="muted" id="statsLine">—</p>
+        </div>
+        <div class="row wrap">
+          <button class="btn" id="exportBtn">Export</button>
+          <label class="btn btn-secondary" for="importFile" style="cursor:pointer;">Import</label>
+          <input id="importFile" type="file" accept="application/json" style="display:none;" />
+          <button class="btn btn-danger" id="resetBtn">Reset</button>
+        </div>
+      </div>
+      <p class="muted small">Export lets them send you progress without accounts.</p>
+    </section>
+
+    <section class="card">
+      <h2>Recent Sessions</h2>
+      <div id="list" class="list"></div>
+    </section>
+  </main>
+
+  <script src="assets/app.js"></script>
+  <script>
+    const playerEl = document.getElementById('player');
+    const statsLine = document.getElementById('statsLine');
+    const list = document.getElementById('list');
+    const exportBtn = document.getElementById('exportBtn');
+    const importFile = document.getElementById('importFile');
+    const resetBtn = document.getElementById('resetBtn');
+
+    const code = MQ.getPlayerCode() || 'GUEST';
+    playerEl.textContent = `Player: ${code}`;
+
+    function render() {
+      const data = MQ.getProgress();
+      const sessions = data.sessions || [];
+      const streak = MQ.getStreakDays(data.lastPracticeDate);
+      const best = sessions.reduce((m, s) => Math.max(m, s.scorePct || 0), 0);
+
+      statsLine.textContent = `Sessions: ${sessions.length} • Best score: ${best}% • Streak: ${streak} day(s)`;
+
+      list.innerHTML = '';
+      if (sessions.length === 0) {
+        list.innerHTML = `<p class="muted">No sessions yet. Do a mission first.</p>`;
+        return;
+      }
+
+      sessions.slice().reverse().slice(0, 12).forEach(s => {
+        const when = new Date(s.timestamp);
+        const row = document.createElement('div');
+        row.className = 'list-item';
+        row.innerHTML = `
+          <div class="strong">${s.mode}</div>
+          <div class="muted small">${when.toLocaleString()}</div>
+          <div class="pill">${s.correct}/${s.total} • ${s.scorePct}%</div>
+        `;
+        list.appendChild(row);
+      });
+    }
+
+    exportBtn.addEventListener('click', () => {
+      const blob = MQ.exportProgressBlob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `math-quest-progress-${(MQ.getPlayerCode() || 'GUEST').toLowerCase()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    importFile.addEventListener('change', async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const text = await file.text();
+      const ok = MQ.importProgress(text);
+      if (!ok) alert('Import failed. File not recognized.');
+      render();
+      importFile.value = '';
+    });
+
+    resetBtn.addEventListener('click', () => {
+      if (!confirm('Reset local progress on this device?')) return;
+      MQ.resetProgress();
+      render();
+    });
+
+    render();
+  </script>
+</body>
+</html>
