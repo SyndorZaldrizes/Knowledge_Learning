@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Math Quest</title>
+  <link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+  <main class="container">
+    <header class="card">
+      <h1>Math Quest</h1>
+      <p class="muted">Practice missions. Track progress. Level up.</p>
+    </header>
+
+    <section class="card">
+      <h2>Player Code</h2>
+      <p class="muted">Use a code (not your name). Example: DRAGON-7</p>
+
+      <div class="row">
+        <input id="playerCode" class="input" placeholder="Enter Player Code" maxlength="24" />
+        <button id="savePlayer" class="btn">Save</button>
+      </div>
+
+      <p id="playerStatus" class="muted"></p>
+    </section>
+
+    <section class="card">
+      <h2>Start a mission</h2>
+      <div class="row wrap">
+        <a class="btn" href="practice.html?mode=mult&max=10">Multiplication (0–10)</a>
+        <a class="btn btn-secondary" href="practice.html?mode=mult&max=12">Multiplication (0–12)</a>
+        <a class="btn btn-secondary" href="progress.html">View Progress</a>
+      </div>
+      <p class="muted small">Tip: Do one mission per day to build a streak.</p>
+    </section>
+
+    <footer class="muted small center">
+      Built for practice. No accounts. No personal info stored.
+    </footer>
+  </main>
+
+  <script src="assets/app.js"></script>
+  <script>
+    // Home page wiring
+    const input = document.getElementById('playerCode');
+    const status = document.getElementById('playerStatus');
+    const btn = document.getElementById('savePlayer');
+
+    const current = MQ.getPlayerCode();
+    status.textContent = current ? `Current Player Code: ${current}` : `No Player Code set yet.`;
+    input.value = current || '';
+
+    btn.addEventListener('click', () => {
+      const code = input.value.trim().toUpperCase();
+      const ok = MQ.setPlayerCode(code);
+      status.textContent = ok
+        ? `Saved Player Code: ${MQ.getPlayerCode()}`
+        : `Player Code must be 3–24 chars (letters/numbers/-).`;
+    });
+  </script>
+</body>
+</html>
