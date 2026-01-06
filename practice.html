@@ -49,7 +49,14 @@
     const params = new URLSearchParams(location.search);
     const mode = params.get('mode') || 'mult';
     const max = Number(params.get('max') || 10);
-    const TOTAL = 10;
+    const nParam = params.get('n');
+    let TOTAL = 10;
+    if (nParam) {
+      const n = Number(nParam);
+      if (!Number.isNaN(n)) {
+        TOTAL = Math.max(10, Math.min(100, n)); // Clamp to [10, 100]
+      }
+    }
 
     const title = document.getElementById('title');
     const subtitle = document.getElementById('subtitle');
@@ -70,7 +77,7 @@
     title.textContent = modeLabel;
     subtitle.textContent = `Answer ${TOTAL} questions. Fast and focused.`;
 
-    retry.href = `practice.html?mode=${encodeURIComponent(mode)}&max=${encodeURIComponent(max)}`;
+    retry.href = `practice.html?mode=${encodeURIComponent(mode)}&max=${encodeURIComponent(max)}&n=${encodeURIComponent(TOTAL)}`;
 
     let i = 0;
     let correct = 0;

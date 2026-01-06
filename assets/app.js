@@ -2,6 +2,7 @@
 const MQ = (() => {
   const PLAYER_KEY = 'mq_player_code_v1';
   const PROGRESS_KEY = 'mq_progress_v1';
+  const QUESTION_COUNT_KEY = 'mq_question_count_v1';
 
   function safeParse(json, fallback) {
     try { return JSON.parse(json); } catch { return fallback; }
@@ -16,6 +17,31 @@ const MQ = (() => {
     const cleaned = (code || '').trim().toUpperCase();
     if (!/^[A-Z0-9-]{3,24}$/.test(cleaned)) return false;
     localStorage.setItem(PLAYER_KEY, cleaned);
+    return true;
+  }
+
+  function getQuestionCount() {
+    const stored = localStorage.getItem(QUESTION_COUNT_KEY);
+    const num = Number(stored);
+    return (Number.isNaN(num) || num < 10 || num > 100) ? 10 : num;
+  }
+
+  function setQuestionCount(n) {
+    const num = Number(n);
+    if (Number.isNaN(num)) return false;
+    const clamped = Math.max(10, Math.min(100, num));
+    // Round to nearest allowed value: 10, 20, 30, 50, 100
+    const allowed = [10, 20, 30, 50, 100];
+    let closest = allowed[0];
+    let minDiff = Math.abs(clamped - closest);
+    for (let val of allowed) {
+      const diff = Math.abs(clamped - val);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closest = val;
+      }
+    }
+    localStorage.setItem(QUESTION_COUNT_KEY, closest);
     return true;
   }
 
@@ -105,6 +131,8 @@ const MQ = (() => {
     exportProgressBlob,
     importProgress,
     randInt,
-    getStreakDays
+    getStreakDays,
+    getQuestionCount,
+    setQuestionCount
   };
 })();

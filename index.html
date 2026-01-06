@@ -26,6 +26,17 @@
     </section>
 
     <section class="card">
+      <h2>Questions per Mission</h2>
+      <select id="questionCount" class="input">
+        <option value="10">10</option>
+        <option value="20">20</option>
+        <option value="30">30</option>
+        <option value="50">50</option>
+        <option value="100">100</option>
+      </select>
+    </section>
+
+    <section class="card">
       <h2>Start a mission</h2>
       <div class="row wrap">
         <a class="btn" href="practice.html?mode=mult&max=10">Multiplication (0–10)</a>
@@ -46,10 +57,25 @@
     const input = document.getElementById('playerCode');
     const status = document.getElementById('playerStatus');
     const btn = document.getElementById('savePlayer');
+    const selector = document.getElementById('questionCount');
+    const missionLinks = document.querySelectorAll('section.card a[href*="practice.html"]');
 
     const current = MQ.getPlayerCode();
     status.textContent = current ? `Current Player Code: ${current}` : `No Player Code set yet.`;
     input.value = current || '';
+
+    selector.value = MQ.getQuestionCount();
+
+    function updateLinks() {
+      const n = MQ.getQuestionCount();
+      missionLinks.forEach(link => {
+        const url = new URL(link.href, location.origin);
+        url.searchParams.set('n', n);
+        link.href = url.toString();
+      });
+    }
+
+    updateLinks();
 
     btn.addEventListener('click', () => {
       const code = input.value.trim().toUpperCase();
@@ -57,6 +83,12 @@
       status.textContent = ok
         ? `Saved Player Code: ${MQ.getPlayerCode()}`
         : `Player Code must be 3–24 chars (letters/numbers/-).`;
+    });
+
+    selector.addEventListener('change', () => {
+      const val = Number(selector.value);
+      MQ.setQuestionCount(val);
+      updateLinks();
     });
   </script>
 </body>
