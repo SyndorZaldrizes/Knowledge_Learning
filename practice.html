@@ -36,6 +36,7 @@
     <section class="card" id="results" style="display:none;">
       <h2>Mission Complete</h2>
       <p id="scoreLine" class="muted"></p>
+      <div id="review"></div>
       <div class="row wrap">
         <a class="btn" id="retry" href="#">Retry</a>
         <a class="btn btn-secondary" href="index.html">Home</a>
@@ -67,6 +68,7 @@
     const feedback = document.getElementById('feedback');
     const results = document.getElementById('results');
     const scoreLine = document.getElementById('scoreLine');
+    const review = document.getElementById('review');
     const playerPill = document.getElementById('playerPill');
     const retry = document.getElementById('retry');
 
@@ -82,6 +84,7 @@
     let i = 0;
     let correct = 0;
     let current = null;
+    const missed = [];
 
     function newQuestion() {
       feedback.textContent = '';
@@ -92,12 +95,54 @@
       if (mode === 'mult') {
         const a = MQ.randInt(0, max);
         const b = MQ.randInt(0, max);
-        current = { a, b, answer: a * b, text: `${a} × ${b} = ?` };
+        current = { a, b, answer: a * b, text: `${a} × ${b} = ?`, promptText: `${a} × ${b}` };
       } else {
         current = { a: 1, b: 1, answer: 1, text: `Coming soon` };
       }
 
       qEl.textContent = current.text;
+    }
+
+    function recordMiss(promptText, userAnswer, correctAnswer) {
+      const idx = missed.findIndex(item => item.promptText === promptText);
+      const entry = { promptText, userAnswer, correctAnswer };
+      if (idx === -1) {
+        missed.push(entry);
+      } else {
+        missed[idx] = entry;
+      }
+    }
+
+    function renderReview() {
+      review.innerHTML = '';
+      const title = document.createElement('h3');
+      title.textContent = 'Review Mistakes';
+      review.appendChild(title);
+
+      if (missed.length === 0) {
+        const message = document.createElement('p');
+        message.className = 'muted';
+        message.textContent = 'Perfect mission. No mistakes.';
+        review.appendChild(message);
+        return;
+      }
+
+      const list = document.createElement('div');
+      list.className = 'list';
+      missed.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'list-item';
+        const prompt = document.createElement('div');
+        prompt.className = 'strong';
+        prompt.textContent = item.promptText;
+        const detail = document.createElement('div');
+        detail.className = 'muted small';
+        detail.textContent = `Your answer: ${item.userAnswer} • Correct: ${item.correctAnswer}`;
+        row.appendChild(prompt);
+        row.appendChild(detail);
+        list.appendChild(row);
+      });
+      review.appendChild(list);
     }
 
     function finish() {
@@ -113,6 +158,7 @@
       MQ.recordSession(session);
 
       scoreLine.textContent = `Score: ${correct}/${TOTAL} (${scorePct}%)`;
+      renderReview();
       results.style.display = 'block';
       submitBtn.disabled = true;
       ansEl.disabled = true;
@@ -137,6 +183,7 @@
       } else {
         feedback.textContent = `Not quite. Correct answer: ${current.answer}`;
         feedback.className = 'feedback bad';
+        recordMiss(current.promptText || current.text, raw, current.answer);
       }
 
       i++;
