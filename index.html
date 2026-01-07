@@ -13,38 +13,45 @@
       <p class="muted">Practice missions. Track progress. Level up.</p>
     </header>
 
-    <section class="card">
-      <h2>Player Code</h2>
-      <p class="muted">Use a code (not your name). Example: DRAGON-7</p>
+    <section class="card compact">
+      <div class="row wrap space">
+        <div class="stack grow">
+          <h2>Player Code</h2>
+          <p class="muted small">Use a code (not your name). Example: DRAGON-7</p>
 
-      <div class="row">
-        <input id="playerCode" class="input" placeholder="Enter Player Code" maxlength="24" />
-        <button id="savePlayer" class="btn">Save</button>
+          <div class="row">
+            <input id="playerCode" class="input" placeholder="Enter Player Code" maxlength="24" />
+            <button id="savePlayer" class="btn">Save</button>
+          </div>
+
+          <p id="playerStatus" class="muted small"></p>
+        </div>
+
+        <div class="stack shrink">
+          <h2>Questions per Mission</h2>
+          <select id="questionCount" class="input">
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="30">30</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+        </div>
       </div>
-
-      <p id="playerStatus" class="muted"></p>
-    </section>
-
-    <section class="card">
-      <h2>Questions per Mission</h2>
-      <select id="questionCount" class="input">
-        <option value="10">10</option>
-        <option value="20">20</option>
-        <option value="30">30</option>
-        <option value="50">50</option>
-        <option value="100">100</option>
-      </select>
     </section>
 
     <section class="card">
       <h2>Start a mission</h2>
       <div class="row wrap">
-        <a class="btn" href="practice.html?mode=mult&max=10">Multiplication (0–10)</a>
-        <a class="btn btn-secondary" href="practice.html?mode=mult&max=12">Multiplication (0–12)</a>
-        <a class="btn btn-secondary" href="practice.html?mode=mult&max=12&level=hard">Multiplication Hard</a>
-        <a class="btn" href="practice.html?mode=div&max=10">Division (0–10)</a>
-        <a class="btn btn-secondary" href="practice.html?mode=div&max=12">Division (0–12)</a>
-        <a class="btn btn-secondary" href="practice.html?mode=div&max=12&level=hard">Division Hard</a>
+        <label class="stack">
+          <span class="muted small">Max number</span>
+          <select id="maxNumber" class="input">
+            <option value="10">10</option>
+            <option value="12">12</option>
+          </select>
+        </label>
+        <a class="btn" href="practice.html?mode=mult">Start Multiplication</a>
+        <a class="btn" href="practice.html?mode=div">Start Division</a>
         <a class="btn btn-secondary" href="practice.html?mode=mixed&max=12&timed=1&t=60">Timed Quiz (60s) – Mixed (Mult + Div basic)</a>
         <a class="btn btn-secondary" href="progress.html">View Progress</a>
       </div>
@@ -63,6 +70,7 @@
     const status = document.getElementById('playerStatus');
     const btn = document.getElementById('savePlayer');
     const selector = document.getElementById('questionCount');
+    const maxSelector = document.getElementById('maxNumber');
     const missionLinks = document.querySelectorAll('section.card a[href*="practice.html"]');
 
     const current = MQ.getPlayerCode();
@@ -73,9 +81,15 @@
 
     function updateLinks() {
       const n = MQ.getQuestionCount();
+      const max = Number(maxSelector.value);
       missionLinks.forEach(link => {
         const url = new URL(link.href, location.origin);
         url.searchParams.set('n', n);
+        if (url.searchParams.has('max')) {
+          url.searchParams.set('max', max);
+        } else if (url.searchParams.get('mode')) {
+          url.searchParams.set('max', max);
+        }
         link.href = url.toString();
       });
     }
@@ -93,6 +107,10 @@
     selector.addEventListener('change', () => {
       const val = Number(selector.value);
       MQ.setQuestionCount(val);
+      updateLinks();
+    });
+
+    maxSelector.addEventListener('change', () => {
       updateLinks();
     });
   </script>
