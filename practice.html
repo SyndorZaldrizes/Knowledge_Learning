@@ -20,7 +20,10 @@
     <section class="card">
       <div class="row space">
         <div class="pill" id="counter">Question 1 / 10</div>
-        <div class="pill" id="playerPill">Player: —</div>
+        <div class="row wrap">
+          <div class="pill" id="timerPill" style="display:none;">Time left: 60s</div>
+          <div class="pill" id="playerPill">Player: —</div>
+        </div>
       </div>
 
       <div class="question" id="question">—</div>
@@ -50,6 +53,9 @@
     const params = new URLSearchParams(location.search);
     const mode = params.get('mode') || 'mult';
     const max = Number(params.get('max') || 10);
+    const level = params.get('level') || 'basic';
+    const timed = params.get('timed') === '1';
+    const tParam = Number(params.get('t'));
     const nParam = params.get('n');
     let TOTAL = 10;
     if (nParam) {
@@ -71,20 +77,57 @@
     const review = document.getElementById('review');
     const playerPill = document.getElementById('playerPill');
     const retry = document.getElementById('retry');
+    const timerPill = document.getElementById('timerPill');
 
     const player = MQ.getPlayerCode() || 'GUEST';
     playerPill.textContent = `Player: ${player}`;
 
-    const modeLabel = (mode === 'mult') ? `Multiplication (0–${max})` : `Practice`;
+    const maxFactor = Number.isFinite(max) && max > 0 ? Math.floor(max) : 10;
+    const isHard = level === 'hard';
+    const modeLabel = (() => {
+      if (mode === 'mult') return isHard ? 'Multiplication Hard' : `Multiplication (0–${maxFactor})`;
+      if (mode === 'div') return isHard ? 'Division Hard' : `Division (0–${maxFactor})`;
+      if (mode === 'mixed') return 'Timed Quiz • Mixed';
+      return 'Practice';
+    })();
     title.textContent = modeLabel;
-    subtitle.textContent = `Answer ${TOTAL} questions. Fast and focused.`;
+    const timeLimit = Number.isNaN(tParam) ? 60 : Math.round(tParam);
+    const clampedTime = Math.max(30, Math.min(300, timeLimit));
+    subtitle.textContent = timed
+      ? `Answer as many as you can in ${clampedTime}s.`
+      : `Answer ${TOTAL} questions. Fast and focused.`;
 
-    retry.href = `practice.html?mode=${encodeURIComponent(mode)}&max=${encodeURIComponent(max)}&n=${encodeURIComponent(TOTAL)}`;
+    const retryParams = new URLSearchParams();
+    retryParams.set('mode', mode);
+    retryParams.set('max', String(maxFactor));
+    retryParams.set('n', String(TOTAL));
+    if (level) retryParams.set('level', level);
+    if (timed) {
+      retryParams.set('timed', '1');
+      retryParams.set('t', String(clampedTime));
+    }
+    retry.href = `practice.html?${retryParams.toString()}`;
 
     let i = 0;
     let correct = 0;
     let current = null;
     const missed = [];
+    let finished = false;
+    let timerId = null;
+    let timeLeft = clampedTime;
+
+    if (timed) {
+      timerPill.style.display = 'inline-flex';
+      timerPill.textContent = `Time left: ${timeLeft}s`;
+      timerId = setInterval(() => {
+        timeLeft--;
+        timerPill.textContent = `Time left: ${timeLeft}s`;
+        if (timeLeft <= 0) {
+          clearInterval(timerId);
+          finish(true);
+        }
+      }, 1000);
+    }
 
     function newQuestion() {
       feedback.textContent = '';
@@ -92,10 +135,51 @@
       ansEl.focus();
       counter.textContent = `Question ${i + 1} / ${TOTAL}`;
 
+      const makeMultBasic = () => {
+        const a = MQ.randInt(0, maxFactor);
+        const b = MQ.randInt(0, maxFactor);
+        return { a, b, answer: a * b, text: `${a} × ${b} = ?`, promptText: `${a} × ${b}` };
+      };
+
+      const makeMultHard = () => {
+        const a = MQ.randInt(10, 99);
+        const bMax = Math.max(2, maxFactor);
+        const b = MQ.randInt(2, bMax);
+        return { a, b, answer: a * b, text: `${a} × ${b} = ?`, promptText: `${a} × ${b}` };
+      };
+
+      const makeDivBasic = () => {
+        const divisor = MQ.randInt(1, maxFactor);
+        const quotient = MQ.randInt(0, maxFactor);
+        const dividend = divisor * quotient;
+        return {
+          a: dividend,
+          b: divisor,
+          answer: quotient,
+          text: `${dividend} ÷ ${divisor} = ?`,
+          promptText: `${dividend} ÷ ${divisor}`
+        };
+      };
+
+      const makeDivHard = () => {
+        const divisor = MQ.randInt(2, Math.min(12, Math.max(2, maxFactor)));
+        const quotient = MQ.randInt(10, 99);
+        const dividend = divisor * quotient;
+        return {
+          a: dividend,
+          b: divisor,
+          answer: quotient,
+          text: `${dividend} ÷ ${divisor} = ?`,
+          promptText: `${dividend} ÷ ${divisor}`
+        };
+      };
+
       if (mode === 'mult') {
-        const a = MQ.randInt(0, max);
-        const b = MQ.randInt(0, max);
-        current = { a, b, answer: a * b, text: `${a} × ${b} = ?`, promptText: `${a} × ${b}` };
+        current = isHard ? makeMultHard() : makeMultBasic();
+      } else if (mode === 'div') {
+        current = isHard ? makeDivHard() : makeDivBasic();
+      } else if (mode === 'mixed') {
+        current = (Math.random() < 0.5) ? makeMultBasic() : makeDivBasic();
       } else {
         current = { a: 1, b: 1, answer: 1, text: `Coming soon` };
       }
@@ -145,11 +229,16 @@
       review.appendChild(list);
     }
 
-    function finish() {
-      const scorePct = Math.round((correct / TOTAL) * 100);
+    function finish(fromTimer = false) {
+      if (finished) return;
+      finished = true;
+      if (timerId) clearInterval(timerId);
+      const attempted = fromTimer ? i : TOTAL;
+      const totalForScore = timed ? attempted : TOTAL;
+      const scorePct = totalForScore ? Math.round((correct / totalForScore) * 100) : 0;
       const session = {
         mode: modeLabel,
-        total: TOTAL,
+        total: totalForScore,
         correct,
         scorePct,
         timestamp: new Date().toISOString()
@@ -157,7 +246,7 @@
 
       MQ.recordSession(session);
 
-      scoreLine.textContent = `Score: ${correct}/${TOTAL} (${scorePct}%)`;
+      scoreLine.textContent = `Score: ${correct}/${totalForScore} (${scorePct}%)`;
       renderReview();
       results.style.display = 'block';
       submitBtn.disabled = true;
@@ -188,7 +277,7 @@
 
       i++;
       if (i >= TOTAL) {
-        finish();
+        finish(false);
       } else {
         setTimeout(newQuestion, 450);
       }
