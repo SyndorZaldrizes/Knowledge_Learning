@@ -7,14 +7,21 @@
   <link rel="stylesheet" href="assets/style.css" />
 </head>
 <body>
+  <header class="site-header">
+    <div class="header-inner">
+      <p class="site-title">Math Quest</p>
+      <nav class="nav" aria-label="Main navigation">
+        <a href="index.html">Home</a>
+        <a href="practice.html" aria-current="page">Practice</a>
+        <a href="progress.html">Progress</a>
+      </nav>
+    </div>
+  </header>
+
   <main class="container">
     <header class="card">
       <h1 id="title">Practice Mission</h1>
       <p id="subtitle" class="muted"></p>
-      <div class="row wrap">
-        <a class="btn btn-secondary" href="index.html">Home</a>
-        <a class="btn btn-secondary" href="progress.html">Progress</a>
-      </div>
     </header>
 
     <section class="card">
@@ -28,7 +35,8 @@
 
       <div class="question" id="question">—</div>
 
-      <div class="row">
+      <label class="sr-only" for="answer">Answer</label>
+      <div class="field-row">
         <input id="answer" class="input" inputmode="numeric" placeholder="Type answer" />
         <button id="submit" class="btn">Submit</button>
       </div>
