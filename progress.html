@@ -7,25 +7,11 @@
   <link rel="stylesheet" href="assets/style.css" />
 </head>
 <body>
-  <header class="site-header">
-    <div class="header-inner">
-      <p class="site-title">Math Quest</p>
-      <nav class="nav" aria-label="Main navigation">
-        <a href="index.html">Home</a>
-        <a href="practice.html">Practice</a>
-        <a href="progress.html" aria-current="page">Progress</a>
-      </nav>
-    </div>
-  </header>
-
   <main class="container">
     <header class="card">
       <h1>Progress</h1>
-      <p class="muted">Track recent sessions and manage progress data.</p>
-    </header>
-
-    <section class="card">
-      <div class="row space wrap">
+      <p class="muted">Local progress stored by Player Code. No accounts.</p>
+      <div class="row wrap space">
         <div>
           <h2 id="player">Player: —</h2>
           <p class="muted" id="statsLine">—</p>
@@ -37,7 +23,11 @@
           <button class="btn btn-danger" id="resetBtn">Reset</button>
         </div>
       </div>
-      <p class="muted small">Export lets them send you progress without accounts.</p>
+    </header>
+
+    <section class="card">
+      <h2>Advanced Summary</h2>
+      <div id="advancedSummary" class="list"></div>
     </section>
 
     <section class="card">
@@ -47,10 +37,12 @@
   </main>
 
   <script src="assets/app.js"></script>
+  <script src="assets/storage.js"></script>
   <script>
     const playerEl = document.getElementById('player');
     const statsLine = document.getElementById('statsLine');
     const list = document.getElementById('list');
+    const advancedSummary = document.getElementById('advancedSummary');
     const exportBtn = document.getElementById('exportBtn');
     const importFile = document.getElementById('importFile');
     const resetBtn = document.getElementById('resetBtn');
@@ -66,23 +58,42 @@
 
       statsLine.textContent = `Sessions: ${sessions.length} • Best score: ${best}% • Streak: ${streak} day(s)`;
 
+      // Recent sessions (elementary + advanced)
       list.innerHTML = '';
       if (sessions.length === 0) {
         list.innerHTML = `<p class="muted">No sessions yet. Do a mission first.</p>`;
-        return;
+      } else {
+        sessions.slice().reverse().slice(0, 12).forEach(s => {
+          const when = new Date(s.timestamp);
+          const row = document.createElement('div');
+          row.className = 'list-item';
+          row.innerHTML = `
+            <div class="strong">${s.mode}</div>
+            <div class="muted small">${when.toLocaleString()}</div>
+            <div class="pill">${s.correct}/${s.total} • ${s.scorePct}%</div>
+          `;
+          list.appendChild(row);
+        });
       }
 
-      sessions.slice().reverse().slice(0, 12).forEach(s => {
-        const when = new Date(s.timestamp);
-        const row = document.createElement('div');
-        row.className = 'list-item';
-        row.innerHTML = `
-          <div class="strong">${s.mode}</div>
-          <div class="muted small">${when.toLocaleString()}</div>
-          <div class="pill">${s.correct}/${s.total} • ${s.scorePct}%</div>
-        `;
-        list.appendChild(row);
-      });
+      // Advanced summary by topic
+      advancedSummary.innerHTML = '';
+      const advStats = AdvancedStore.getBestScoresByTopic();
+      if (Object.keys(advStats).length === 0) {
+        advancedSummary.innerHTML = `<p class="muted">No advanced sessions yet.</p>`;
+      } else {
+        for (const key of Object.keys(advStats)) {
+          const entry = advStats[key];
+          const node = document.createElement('div');
+          node.className = 'list-item';
+          node.innerHTML = `
+            <div class="strong">${entry.topic} • ${entry.level}</div>
+            <div class="muted small">Best: ${entry.best}% • Played: ${entry.count} time(s)</div>
+            <div class="pill">Streak: ${entry.streak}</div>
+          `;
+          advancedSummary.appendChild(node);
+        }
+      }
     }
 
     exportBtn.addEventListener('click', () => {

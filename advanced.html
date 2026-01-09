@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Advanced Missions</title>
+  <link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+  <main class="container">
+    <header class="card">
+      <h1>Advanced Missions</h1>
+      <p class="muted">Middle School (Grades 6–8) & High School (Grades 9–12). Elementary missions remain on the main page.</p>
+      <div class="row wrap">
+        <a class="btn btn-secondary" href="index.html">Home</a>
+        <a class="btn btn-secondary" href="progress.html">Progress</a>
+      </div>
+    </header>
+
+    <section class="card compact">
+      <div class="row space wrap">
+        <label class="stack">
+          <span class="muted small">Difficulty</span>
+          <select id="difficulty" class="input">
+            <option value="middle">Middle School (Grade 6–8)</option>
+            <option value="high">High School (Grade 9–12)</option>
+          </select>
+        </label>
+
+        <label class="stack">
+          <span class="muted small">Questions per Mission</span>
+          <select id="qCount" class="input">
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="30">30</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+        </label>
+
+        <label class="stack">
+          <span class="muted small">Mission Length</span>
+          <select id="missionLength" class="input">
+            <option value="10">Quick (10)</option>
+            <option value="20">Short (20)</option>
+            <option value="30">Medium (30)</option>
+            <option value="50">Long (50)</option>
+          </select>
+        </label>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Select a topic</h2>
+      <div id="topics" class="row wrap"></div>
+    </section>
+
+    <section class="card" id="mission" style="display:none;">
+      <div class="row space">
+        <div class="pill" id="counter">Question 1 / 10</div>
+        <div class="row wrap">
+          <div class="pill" id="playerPill">Player: —</div>
+          <div class="pill" id="streakPill">Streak: —</div>
+        </div>
+      </div>
+
+      <div class="question" id="question">—</div>
+
+      <div id="choices"></div>
+
+      <div class="row">
+        <input id="answer" class="input" placeholder="Type answer (or pick)" />
+        <button id="submit" class="btn">Submit</button>
+      </div>
+
+      <p id="feedback" class="feedback"></p>
+    </section>
+
+    <section class="card" id="results" style="display:none;">
+      <h2>Mission Complete</h2>
+      <p id="scoreLine" class="muted"></p>
+      <div id="review"></div>
+      <div class="row wrap">
+        <a class="btn" id="retry" href="#">Retry</a>
+        <a class="btn btn-secondary" href="index.html">Home</a>
+        <a class="btn btn-secondary" href="progress.html">Progress</a>
+      </div>
+    </section>
+  </main>
+
+  <script src="assets/app.js"></script>
+  <script src="assets/storage.js"></script>
+  <script src="assets/advanced.js"></script>
+</body>
+</html>

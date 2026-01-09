@@ -7,21 +7,10 @@
   <link rel="stylesheet" href="assets/style.css" />
 </head>
 <body>
-  <header class="site-header">
-    <div class="header-inner">
-      <p class="site-title">Math Quest</p>
-      <nav class="nav" aria-label="Main navigation">
-        <a href="index.html" aria-current="page">Home</a>
-        <a href="practice.html">Practice</a>
-        <a href="progress.html">Progress</a>
-      </nav>
-    </div>
-  </header>
-
   <main class="container">
     <header class="card">
-      <h1>Practice missions, track progress, level up.</h1>
-      <p class="muted">Set your player code once, then jump into a mission.</p>
+      <h1>Math Quest</h1>
+      <p class="muted">Practice missions. Track progress. Level up.</p>
     </header>
 
     <section class="card compact">
@@ -30,8 +19,7 @@
           <h2>Player Code</h2>
           <p class="muted small">Use a code (not your name). Example: DRAGON-7</p>
 
-          <label class="sr-only" for="playerCode">Player Code</label>
-          <div class="field-row">
+          <div class="row">
             <input id="playerCode" class="input" placeholder="Enter Player Code" maxlength="24" />
             <button id="savePlayer" class="btn">Save</button>
           </div>
@@ -41,7 +29,6 @@
 
         <div class="stack shrink">
           <h2>Questions per Mission</h2>
-          <label class="sr-only" for="questionCount">Questions per mission</label>
           <select id="questionCount" class="input">
             <option value="10">10</option>
             <option value="20">20</option>
@@ -54,7 +41,7 @@
     </section>
 
     <section class="card">
-      <h2 class="section-title">Start a mission</h2>
+      <h2>Start a mission</h2>
       <div class="row wrap">
         <label class="stack">
           <span class="muted small">Max number</span>
@@ -63,17 +50,16 @@
             <option value="12">12</option>
           </select>
         </label>
-      </div>
-      <div class="mission-grid">
         <a class="btn" href="practice.html?mode=mult">Start Multiplication</a>
         <a class="btn" href="practice.html?mode=div">Start Division</a>
         <a class="btn btn-secondary" href="practice.html?mode=mixed&max=12&timed=1&t=60">Timed Quiz (60s) – Mixed (Mult + Div basic)</a>
         <a class="btn btn-secondary" href="progress.html">View Progress</a>
+        <a class="btn btn-advanced" href="advanced.html">Advanced (Middle + High School)</a>
       </div>
       <p class="muted small">Tip: Do one mission per day to build a streak.</p>
     </section>
 
-    <footer class="footer-note">
+    <footer class="muted small center">
       Built for practice. No accounts. No personal info stored.
     </footer>
   </main>
@@ -86,7 +72,7 @@
     const btn = document.getElementById('savePlayer');
     const selector = document.getElementById('questionCount');
     const maxSelector = document.getElementById('maxNumber');
-    const missionLinks = document.querySelectorAll('section.card a[href*="practice.html"]');
+    const missionLinks = document.querySelectorAll('section.card a[href*="practice.html"], section.card a[href*="advanced.html"]');
 
     const current = MQ.getPlayerCode();
     status.textContent = current ? `Current Player Code: ${current}` : `No Player Code set yet.`;
@@ -100,34 +86,28 @@
       missionLinks.forEach(link => {
         const url = new URL(link.href, location.origin);
         url.searchParams.set('n', n);
-        if (url.searchParams.has('max')) {
-          url.searchParams.set('max', max);
-        } else if (url.searchParams.get('mode')) {
+        if (url.searchParams.has('max') || url.pathname.endsWith('practice.html')) {
+          // keep max param for practice links
           url.searchParams.set('max', max);
         }
-        link.href = url.toString();
+        // For advanced.html we pass n and leave other params for the advanced page to manage
+        link.href = url.href;
       });
     }
 
-    updateLinks();
-
     btn.addEventListener('click', () => {
-      const code = input.value.trim().toUpperCase();
-      const ok = MQ.setPlayerCode(code);
-      status.textContent = ok
-        ? `Saved Player Code: ${MQ.getPlayerCode()}`
-        : `Player Code must be 3–24 chars (letters/numbers/-).`;
+      const ok = MQ.setPlayerCode(input.value);
+      status.textContent = ok ? `Saved player code: ${MQ.getPlayerCode()}` : 'Invalid code (3–24 chars, A–Z, 0–9, -)';
+      input.value = MQ.getPlayerCode() || '';
     });
 
     selector.addEventListener('change', () => {
-      const val = Number(selector.value);
-      MQ.setQuestionCount(val);
+      MQ.setQuestionCount(selector.value);
       updateLinks();
     });
 
-    maxSelector.addEventListener('change', () => {
-      updateLinks();
-    });
+    maxSelector.addEventListener('change', updateLinks);
+    updateLinks();
   </script>
 </body>
 </html>
